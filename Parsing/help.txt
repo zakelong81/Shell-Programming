@@ -1,0 +1,13 @@
+--help : displays the usage/options and exits.
+
+--resources : counts how many times each resource has been requested. The output is two columns. The first
+is the count and the second is the name of the resource.
+
+--requesters : counts how many times each source IP has requested a resource. The output is two columns.
+The first is the count and the second is the IP.
+
+--errors : has the same specification as the --resources option except, that it only shows log entries that have
+HTTP status codes in the 400's or the 500's.
+
+--hourly : counts the requests that come in each hour (from 0–23). The output is two columns. The first is the
+count and the second is the date/hour.

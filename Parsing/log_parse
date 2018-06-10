@@ -1,0 +1,110 @@
+#!/usr/bin/python3.5
+import pandas as pd
+import re
+import sys
+
+row_names = ['ip', '-', '--', 'time', 'resources', 'status', 'user_agent']
+
+def readFile(file_name):
+    df = pd.read_csv(file_name,
+            names=row_names,
+            sep=r'\s(?=(?:[^"]*"[^"]*")*[^"]*$)(?![^\[]*\])',
+            engine='python',
+            encoding ="ISO-8859-1")
+    return df
+
+def getDays(df, days):
+    new_df = pd.DataFrame()
+    new_df.reindex_like(df)
+    for i, row in df.iterrows():
+        d = row['time']
+        tmp_d = d.split("/")
+        cur_day = tmp_d[0].replace("[", "")
+        if len(days) == 1:
+            if int(cur_day) == int(days[0]):
+                new_df = new_df.append(row)
+        elif int(cur_day) == int(days[0]) or int(cur_day) == int(days[1]):
+                    new_df = new_df.append(row)
+    return new_df
+
+
+def resources(dat):
+    print(dat['resources'])
+
+def requesters(dat):
+    print(dat['ip'])
+
+def errors(dat):
+    error_dict = {}
+    for i, row in df.iterrows():
+        status = row["status"]
+        if int(status) > 400:
+            if not row['resources'] in error_dict:
+                error_dict[row['resources']] = 1
+            else:
+                error_dict[row['resources']] += 1
+    for key, value in error_dict.items():
+        print(key, value)
+
+def hourly(dat):
+    new_flag = False
+    hour = 0
+    tracker = {}
+    count = 0
+    for i, row in dat.iterrows():
+        d = row['time']
+        tmp_d = d.split("/")
+        cur_hour = tmp_d[2]
+        cur_hour = cur_hour.split(":")
+        cur_hour = int(cur_hour[1])
+        if not new_flag:
+            tracker[d] = count
+            hour = cur_hour
+            new_flag = True
+        if hour != cur_hour:
+            tracker[d] = count
+            count = 0
+            hour = cur_hour
+        count += 1
+    for key, value in tracker.items():
+        print(key, value)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) == 2:
+        if sys.argv[1] == "--help":
+            print("""Usage: log_parse [--type] [--day #|#-#] [options] [/path/to/logfile]
+            The --type argument is required. The types of searches are:
+            \t--resources
+            \t\tDisplays a list of the resources requested and the number of times they were requested.
+            Sorted from the most requested to least.
+            \t--requesters
+            \t\tDisplays a list of the host/IP addresses that requested resources and the number of request mad, sorted from
+            most to least.
+            \t--errors
+            \t\tDisplays the number of times a resource was requested and the errors returned sorted from most to least.
+            \t--hourly
+            \t\tCounts the number of requests recieved, sorts and then displays by the hour in which the request was recieved.
+            \nThe --day argument is required and defines the day or range of days to be parsed. The format is --day 12 | --day 9-20.
+            The only option currently available is --number. This option only displays the top # of results. The format is --number 10.""")
+    if len(sys.argv) > 2:
+        #Read file. If there are 5 arguments, then there is no optional flag,
+        #if there is 6 options there is optional flag
+        if len(sys.argv) == 5:#no options
+            if sys.argv[2] == "--day":
+                day = sys.argv[3]
+                df = readFile(sys.argv[4])
+        elif len(sys.argv) == 6:#options
+            if sys.argv[3] == "--day":
+                day = sys.argv[4]
+                df = readFile(sys.argv[5])
+        day=day.split('-');#easy way to do range
+        dat=getDays(df, day)
+        if sys.argv[1] == "--resources":
+            resources(dat)
+        elif sys.argv[1] == "--requesters":
+            requesters(dat)
+        elif sys.argv[1] == "--errors":
+            errors(dat)
+        elif sys.argv[1] == "--hourly":
+            hourly(dat)
