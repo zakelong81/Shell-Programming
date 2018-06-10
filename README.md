@@ -1,3 +1,3 @@
 # Shell-Programming
 
-Some of the lab in shell programing class 
+Learning Shell Bash and Python
